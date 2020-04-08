@@ -194,7 +194,7 @@ public class MoblinkPlugin extends Object implements MethodCallHandler, SceneRes
             Log.e("WWW", " result != null ");
             if (onReturnSceneDataMap != null) {
                 Log.e("WWW", "onReturnSceneDataMap != null" + onReturnSceneDataMap.toString());
-                mEventSink.success(onReturnSceneDataMap);
+                result.success(onReturnSceneDataMap);
                 onReturnSceneDataMap = null;
                 Log.e("WWW", " onReturnSceneDataMap 回调成功");
             } else if (sp != null) {
@@ -226,18 +226,7 @@ public class MoblinkPlugin extends Object implements MethodCallHandler, SceneRes
                     Log.e("WWW", " restoreScene 补充取值的时候异常可以忽略" + t);
                 }
                 if (onReturnSceneDataMap != null && onReturnSceneDataMap.size() > 0) {
-                    if (null != mEventSink) {
-                        mEventSink.success(onReturnSceneDataMap);
-                    } else {
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (null != mEventSink) {
-                                    mEventSink.success(onReturnSceneDataMap);
-                                }
-                            }
-                        }, 1000);
-                    }
+                    result.success(onReturnSceneDataMap);
                     Log.e("WWW", " result.success(onReturnSceneDataMap)  ===> " +
                             "path===> " + onReturnSceneDataMap.get("path") +
                             " params===>  " + onReturnSceneDataMap.get("params"));

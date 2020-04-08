@@ -3,11 +3,11 @@ version '1.0-SNAPSHOT'
 
 buildscript {
     repositories {
-        google()
-        jcenter()
         maven {
             url "http://mvn.mob.com/android"
         }
+        google()
+        jcenter()
     }
 
     dependencies {
@@ -15,30 +15,22 @@ buildscript {
         classpath 'com.mob.sdk:MobSDK:+'
     }
 }
-
 rootProject.allprojects {
     repositories {
-        google()
-        jcenter()
         maven {
             url "http://mvn.mob.com/android"
         }
+        google()
+        jcenter()
     }
 }
 
 apply plugin: 'com.android.library'
 apply plugin: 'com.mob.sdk'
 
-MobSDK {
-
-
-    MobLink {
-
-    }
-}
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
 
     defaultConfig {
         minSdkVersion 16
@@ -46,5 +38,10 @@ android {
     }
     lintOptions {
         disable 'InvalidPackage'
+    }
+}
+
+MobSDK {
+    MobLink {
     }
 }
