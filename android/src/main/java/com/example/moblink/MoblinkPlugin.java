@@ -1,9 +1,9 @@
 package com.example.moblink;
 
 import android.app.Activity;
-import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.mob.MobSDK;
 import com.mob.moblink.ActionListener;
 import com.mob.moblink.MobLink;
@@ -12,7 +12,13 @@ import com.mob.moblink.Scene;
 import com.mob.moblink.SceneRestorable;
 import com.mob.tools.utils.Hashon;
 import com.mob.tools.utils.SharePrefrenceHelper;
+
 import java.util.HashMap;
+
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -23,22 +29,37 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 /**
  * MoblinkPlugin
  */
-public class MoblinkPlugin extends Object implements MethodCallHandler, SceneRestorable {
+public class MoblinkPlugin extends Object implements FlutterPlugin, ActivityAware, MethodCallHandler, SceneRestorable {
     private static final String getMobId = "getMobId";
     private static final String restoreScene = "restoreScene";
 
-    private static final String EventChannel = "JAVA_TO_FLUTTER";
-    private static EventChannel.EventSink mEventSink;
-    private static Activity activity;
+    private final String EventChannel = "JAVA_TO_FLUTTER";
+    private EventChannel.EventSink mEventSink;
+    private Activity activity;
+    private MethodChannel methodChannel;
+    private EventChannel eventChannel;
     private SharePrefrenceHelper sp;
     private static final String SP_NAME = "MoblinkPlugin";
     private static final String SP_KEY_PATH = "path";
     private static final String SP_KEY_PARAMS = "params";
     private static final String SP_VALUE_CLEAN = "clean";
-    private static HashMap<String, Object> onReturnSceneDataMap;
+    private HashMap<String, Object> onReturnSceneDataMap;
 
-    private MoblinkPlugin(Activity activity) {
-        Log.e("WWW", " MoblinkPlugin构造方法 ");
+    /**
+     * Plugin registration.
+     */
+    public static void registerWith(Registrar registrar) {
+        MoblinkPlugin moblinkPlugin = new MoblinkPlugin();
+        moblinkPlugin.activity = registrar.activity();
+        moblinkPlugin.onAttachedToEngine(registrar.messenger());
+    }
+
+    @Override
+    public void onAttachedToEngine(FlutterPluginBinding binding) {
+        onAttachedToEngine(binding.getBinaryMessenger());
+    }
+
+    private void onAttachedToEngine(BinaryMessenger binaryMessenger) {
         if (MobSDK.getContext() != null) {
             sp = new SharePrefrenceHelper(MobSDK.getContext());
             sp.open(SP_NAME);
@@ -46,9 +67,60 @@ public class MoblinkPlugin extends Object implements MethodCallHandler, SceneRes
             sp = new SharePrefrenceHelper(activity.getApplication().getApplicationContext());
             sp.open(SP_NAME);
         }
-
         //场景还原监听
         MobLink.setRestoreSceneListener(new SceneListener());
+        methodChannel = new MethodChannel(binaryMessenger, "com.yoozoo.mob/moblink");
+        methodChannel.setMethodCallHandler(this);
+
+   /* final EventChannel eventChannel = new EventChannel(registrar.messenger(), EventChannel);
+    MoblinkPlugin instance = new MoblinkPlugin(registrar.activity());
+    eventChannel.setStreamHandler((io.flutter.plugin.common.EventChannel.StreamHandler) instance);*/
+
+        // MobLink.setActivityDelegate(activity, MoblinkPlugin.this);
+        Log.e("WWW", " registerWith() ");
+        eventChannel = new EventChannel(binaryMessenger, EventChannel);
+        eventChannel.setStreamHandler(new EventChannel.StreamHandler() {
+            @Override
+            public void onListen(Object o, EventChannel.EventSink eventSink) {
+                Log.e("WWW", " onListen===mEventSink不为null");
+                mEventSink = eventSink;
+            }
+
+            @Override
+            public void onCancel(Object o) {
+
+            }
+        });
+    }
+
+
+    @Override
+    public void onDetachedFromEngine(FlutterPluginBinding binding) {
+        methodChannel.setMethodCallHandler(null);
+        eventChannel.setStreamHandler(null);
+        eventChannel = null;
+        methodChannel = null;
+
+    }
+
+    @Override
+    public void onAttachedToActivity(ActivityPluginBinding binding) {
+        activity = binding.getActivity();
+    }
+
+    @Override
+    public void onDetachedFromActivityForConfigChanges() {
+
+    }
+
+    @Override
+    public void onReattachedToActivityForConfigChanges(ActivityPluginBinding binding) {
+
+    }
+
+    @Override
+    public void onDetachedFromActivity() {
+
     }
 
     //Java代码
@@ -117,34 +189,6 @@ public class MoblinkPlugin extends Object implements MethodCallHandler, SceneRes
         }
     }
 
-    /**
-     * Plugin registration.
-     */
-    public static void registerWith(Registrar registrar) {
-        final MethodChannel channel = new MethodChannel(registrar.messenger(), "com.yoozoo.mob/moblink");
-        channel.setMethodCallHandler(new MoblinkPlugin(registrar.activity()));
-        activity = registrar.activity();
-
-   /* final EventChannel eventChannel = new EventChannel(registrar.messenger(), EventChannel);
-    MoblinkPlugin instance = new MoblinkPlugin(registrar.activity());
-    eventChannel.setStreamHandler((io.flutter.plugin.common.EventChannel.StreamHandler) instance);*/
-
-        // MobLink.setActivityDelegate(activity, MoblinkPlugin.this);
-        Log.e("WWW", " registerWith() ");
-        final EventChannel eventChannel = new EventChannel(registrar.messenger(), EventChannel);
-        eventChannel.setStreamHandler(new EventChannel.StreamHandler() {
-            @Override
-            public void onListen(Object o, EventChannel.EventSink eventSink) {
-                Log.e("WWW", " onListen===mEventSink不为null");
-                mEventSink = eventSink;
-            }
-
-            @Override
-            public void onCancel(Object o) {
-
-            }
-        });
-    }
 
     @Override
     public void onMethodCall(MethodCall call, Result result) {
