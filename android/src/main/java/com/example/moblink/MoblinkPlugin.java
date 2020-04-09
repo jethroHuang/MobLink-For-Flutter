@@ -106,6 +106,7 @@ public class MoblinkPlugin extends Object implements FlutterPlugin, ActivityAwar
     @Override
     public void onAttachedToActivity(ActivityPluginBinding binding) {
         activity = binding.getActivity();
+        MobLink.updateNewIntent(activity.getIntent(), activity);
     }
 
     @Override
@@ -151,8 +152,8 @@ public class MoblinkPlugin extends Object implements FlutterPlugin, ActivityAwar
             } catch (Throwable t) {
                 Log.e("WWW", " onReturnSceneData catch 前端params传入的类型需要是HashMap<String, Object> 类型 " + t);
             }
-            restoreScene();
-            return null;
+//             restoreScene();
+            return activity.getClass();
         }
 
         @Override
@@ -317,7 +318,7 @@ public class MoblinkPlugin extends Object implements FlutterPlugin, ActivityAwar
         if (mEventSink != null) {
             if (onReturnSceneDataMap != null) {
                 mEventSink.success(onReturnSceneDataMap);
-                onReturnSceneDataMap = null;
+                // onReturnSceneDataMap = null;
             } else if (sp != null) {
                 onReturnSceneDataMap = new HashMap<>();
                 try {
